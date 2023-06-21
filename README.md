@@ -57,9 +57,9 @@ Follow the steps below to get started with EcoAir:
   ```
 5. Connect your Android device or start an emulator.
 6. Run the app with the following command:
-   ```bash
-     flutter run
-   ```
+```bash
+   flutter run
+```
 
 This command will build and deploy the EcoAir app to your connected device or emulator. Make sure that USB debugging is enabled on your device or that the emulator is properly set up.
 
