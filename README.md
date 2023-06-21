@@ -41,15 +41,15 @@ Follow the steps below to get started with EcoAir:
 
 1. Clone the EcoAir repository to your local machine:
 
-   ```bash
+```bash
    git clone https://github.com/your-username/EcoAir.git
-  ```
+```
 
 2. Navigate to the project directory:
 
-   ```bash
+```bash
    cd EcoAir
-  ```
+```
 
 3. Install the required dependencies:
 ```bash
