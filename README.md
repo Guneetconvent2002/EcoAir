@@ -35,7 +35,8 @@ Follow the steps below to get started with EcoAir:
 
 ### Prerequisites
 
-- Android device or emulator running Android OS (version 5.0 or higher)
+- Flutter SDK installed on your development environment
+- Android device with USB debugging enabled or an Android emulator
 
 ### Installation
 
