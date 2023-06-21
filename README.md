@@ -2,9 +2,13 @@
 
 EcoAir is an elegant and intuitive Android application designed and developed to track Air Quality Index (AQI) in remote areas. By utilizing the CPCB API, EcoAir provides real-time information on air quality, contributing to promoting healthier living and raising awareness about air pollution.
 
+<br>
+
 ## Description 📝
 
 EcoAir is a powerful tool that allows users to stay informed about the air quality in their surroundings. The application fetches real-time data from the CPCB API and presents it in a user-friendly interface. Users can easily view the current AQI, pollutant levels, and other relevant information for their location. Additionally, EcoAir provides personalized recommendations to help users make informed decisions and take necessary precautions based on the air quality conditions.
+
+<br>
 
 ## Features ✨
 
@@ -14,12 +18,16 @@ EcoAir is a powerful tool that allows users to stay informed about the air quali
 - User-friendly and intuitive interface
 - Integration with the CPCB API for accurate data
 
+<br>
+
 ## Screenshots 📷
 
 <!-- Add your screenshots here -->
 ![Screenshot 1](screenshots/screenshot1.png)
 ![Screenshot 2](screenshots/screenshot2.png)
 ![Screenshot 3](screenshots/screenshot3.png)
+
+<br>
 
 ## Getting Started 🚀
 
