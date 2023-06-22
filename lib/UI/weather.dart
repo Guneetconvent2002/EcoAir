@@ -1,51 +1,40 @@
-import 'package:clean_air_tracker/UI/networking.dart';
-// import 'package:clean_air_tracker/services/location.dart';
+import 'dart:convert';
 
-const ApiKey = '4b18cfa6256d780081771c0b099cceba';
-const openWeather_API = 'https://api.openweathermap.org/data/2.5/weather';
+class WeatherClass {
+  final int aqi;
+  final String cityName;
 
-class WeatherModel {
-  Future<dynamic> getLocationWeather() async {
-    // Location location = Location();
-    // await location.getCurrentLocation();
+  WeatherClass({required this.aqi, required this.cityName});
 
-    NetworkManager networkManager = NetworkManager(
-        'http://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=-19.3111433551&lon=-19.3111433551&appid=$ApiKey');
-
-    var weatherData = await networkManager.collectData();
-
-    return weatherData;
+  String getAQIClassification() {
+    if (aqi <= 50) {
+      return 'Good';
+    } else if (aqi <= 100) {
+      return 'Moderate';
+    } else if (aqi <= 150) {
+      return 'Unhealthy for Sensitive Groups';
+    } else if (aqi <= 200) {
+      return 'Unhealthy';
+    } else if (aqi <= 300) {
+      return 'Very Unhealthy';
+    } else {
+      return 'Hazardous';
+    }
   }
 
-  // String getWeatherIcon(int condition) {
-  //   if (condition < 300) {
-  //     return '🌩';
-  //   } else if (condition < 400) {
-  //     return '🌧';
-  //   } else if (condition < 600) {
-  //     return '☔️';
-  //   } else if (condition < 700) {
-  //     return '☃️';
-  //   } else if (condition < 800) {
-  //     return '🌫';
-  //   } else if (condition == 800) {
-  //     return '☀️';
-  //   } else if (condition <= 804) {
-  //     return '☁️';
-  //   } else {
-  //     return '🤷‍';
-  //   }
-  // }
-
-  // String getMessage(int temp) {
-  //   if (temp > 25) {
-  //     return 'It\'s 🍦 time in';
-  //   } else if (temp > 20) {
-  //     return 'Time for shorts and 👕 in';
-  //   } else if (temp > 10) {
-  //     return 'You\'ll need 🧣 and 🧤 in';
-  //   } else {
-  //     return 'Bring a 🧥 just in case in';
-  //   }
-  // }
+  String getAQIActions() {
+    if (aqi <= 50) {
+      return 'No specific protection methods are required.\n\nEnjoy outdoor activities as usual. 😄🌳';
+    } else if (aqi <= 100) {
+      return 'No specific protection methods are necessary for the general population.\n\nHowever, unusually sensitive individuals may consider reducing prolonged or heavy outdoor exertion. 🚶‍♀️💨';
+    } else if (aqi <= 150) {
+      return 'Sensitive individuals: Limit outdoor activities and use face masks (N95/N99). 🚫🌞😷';
+    } else if (aqi <= 200) {
+      return 'General population: Reduce outdoor activities, especially heavy exertion. 🏋️‍♀️🌁\n\nSensitive individuals: Avoid heavy exertion, use face masks (N95/N99). ⚠️😷';
+    } else if (aqi <= 300) {
+      return 'Everyone: Minimize outdoor activities. ⛔️🏞️\n\nSensitive individuals: Avoid outdoor activity, use face masks (N95/N99). 🚷😷\n\nConsider using air purifiers indoors. 🏠🍃';
+    } else {
+      return 'Everyone: Avoid outdoor activity, stay indoors. 🚫🌳🏡\n\nKeep windows and doors closed. 🚪❌\n\nUse air purifiers with HEPA filters indoors. 🌬️🔍🏠\n\nWear face masks (N95/N99) if necessary to go outside. 😷🌁';
+    }
+  }
 }

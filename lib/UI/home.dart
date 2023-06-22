@@ -1,260 +1,195 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'networking.dart';
-import 'prev.dart';
-// import 'weather.dart';
+import 'package:http/testing.dart';
+import 'location.dart';
+import 'colors.dart';
+import 'weather.dart';
+import 'package:intl/intl.dart';
 
-class HomePage extends StatefulWidget {
-  HomePage({Key? key}) : super(key: key);
-
+class HomeScreen extends StatefulWidget {
   @override
-  State<HomePage> createState() => _HomepageState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomepageState extends State<HomePage> {
-  var aqi, pm25, pm10, o3, no2, so2, co;
-  Position? _currentPosition;
-  String? _currentAddress;
-
-  var lat, long;
-
-  Future<dynamic> getLocationWeather() async {
-    NetworkManager networkManager = NetworkManager(
-        'http://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=-19.3111433551&lon=-19.3111433551&appid=4b18cfa6256d780081771c0b099cceba');
-
-    var weatherData = await networkManager.collectData();
-    aqi = weatherData[1][0]['main']['aqi'];
-    pm25 = weatherData[1][0]['components']['pm2_5'];
-    pm10 = weatherData[1][0]['components']['pm10'];
-    o3 = weatherData[1][0]['components']['o3'];
-    no2 = weatherData[1][0]['components']['no2'];
-    so2 = weatherData[1][0]['components']['so2'];
-    co = weatherData[1][0]['components']['co'];
-
-    return weatherData;
-  }
-
-  String weather(aqi) {
-    if (aqi == 1) {
-      return "Good";
-    } else if (aqi == 2) {
-      return "Moderate";
-    } else if (aqi == 3) {
-      return "Unhealthy for Sensitive Groups";
-    } else if (aqi == 4) {
-      return "Unhealthy";
-    } else if (aqi == 5) {
-      return "Very Unhealthy";
-    } else {
-      return "Hazardous";
-    }
-  }
-
-  Future<bool> _handleLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Location services are disabled. Please enable the services')));
-      return false;
-    }
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied')));
-        return false;
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Location permissions are permanently denied, we cannot request permissions.')));
-      return false;
-    }
-    return true;
-  }
-
-  Future<void> _getCurrentPosition() async {
-    final hasPermission = await _handleLocationPermission();
-
-    if (!hasPermission) return;
-    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-        .then((Position position) {
-      setState(() => _currentPosition = position);
-      _getAddressFromLatLng(_currentPosition!);
-    }).catchError((e) {
-      debugPrint(e);
-    });
-  }
-
-  Future<void> _getAddressFromLatLng(Position position) async {
-    await placemarkFromCoordinates(
-            _currentPosition!.latitude, _currentPosition!.longitude)
-        .then((List<Placemark> placemarks) {
-      Placemark place = placemarks[0];
-      setState(() {
-        _currentAddress =
-            '${place.street}, ${place.subLocality}, ${place.subAdministrativeArea}, ${place.postalCode}';
-      });
-    }).catchError((e) {
-      debugPrint(e);
-    });
-  }
+class _HomeScreenState extends State<HomeScreen> {
+  String cityName = '';
+  int aqi = 0;
+  DateTime lastUpdatedTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    getLocationWeather();
+    _getCurrentLocation();
+  }
+
+  void _getCurrentLocation() async {
+    LocationService locationService = LocationService();
+    Position? position = await locationService.getCurrentLocation();
+
+    if (position != null) {
+      getCityName(position);
+      getAQIData(position);
+    }
+  }
+
+  Future<void> getCityName(Position position) async {
+    LocationService locationService = LocationService();
+    String city = await locationService.getCityName(position);
+
+    setState(() {
+      cityName = city;
+    });
+  }
+
+  Future<void> getAQIData(Position position) async {
+    final apiKey = '4b18cfa6256d780081771c0b099cceba';
+
+    final latitude = position.latitude;
+    final longitude = position.longitude;
+
+    final url =
+        'https://api.openweathermap.org/data/2.5/air_pollution?lat=$latitude&lon=$longitude&appid=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      final aqi = jsonData['list'][0]['main']['aqi'];
+
+      setState(() {
+        this.aqi = aqi;
+        lastUpdatedTime = DateTime.now();
+      });
+    } else {
+      setState(() {
+        aqi = -1;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Container(
-        padding: const EdgeInsets.fromLTRB(20, 35, 0, 0), // 20, 35, 20, 0
-        decoration: const BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage('lib\Image\cloud1.png'), fit: BoxFit.cover)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Column(
-                  // All the items in the column should align to the left
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Yamuna Nagar, Haryana",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text("Station __ far away",
-                          style: const TextStyle(fontSize: 20)),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                // location icon button which when clicked opens the location page
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.location_on),
-                  iconSize: 40,
-                  color: Colors.black,
-                ),
-                const Spacer(),
-              ],
-            ),
-            Spacer(),
-            // a button which has grey background and black text saying "daily" and size = 30 which when pressed does something
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    "Daily",
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                // text which shows the value of aqi variable and size = 30 and bold
-                Text(
-                  weather(aqi),
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Spacer(),
-                // an icon button which when pressed opens the precautions page
-                IconButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => Precaution()));
-                  },
-                  icon: const Icon(Icons.info_outline),
-                  iconSize: 40,
-                  color: Colors.black,
-                ),
-              ],
-            ),
-            Spacer(),
-
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                "Weekly",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Spacer(),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                "Monthly",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Spacer(),
-            const Text(
-              "Air quailty is not good",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Text(
-              "Stay inside and wear a mask",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            // an image of a cloud which is rotated 90 degrees and offset by 20 pixels and width wrapping the entire screen which is present in Image folder under lib
-            // Image.asset(
-            //   'lib/Image/cloud.png',
-            //   width: MediaQuery.of(context).size.width,
-            //   height: MediaQuery.of(context).size.height,
-            //   fit: BoxFit.fill,
-            // ),
-          ],
+    if (aqi == -1) {
+      return Scaffold(
+        body: Center(
+          child: Text('Failed to fetch AQI data'),
         ),
-      ),
-    );
+      );
+    } else if (aqi == 0) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    } else {
+      WeatherClass weatherData = WeatherClass(aqi: aqi, cityName: cityName);
+      Color fontColor = AppColors.fontColor(aqi);
+
+      String formattedTime =
+          DateFormat('d MMMM h:mm a').format(lastUpdatedTime);
+      String ordinalIndicator = _getOrdinalIndicator(lastUpdatedTime.day);
+
+      return Scaffold(
+        body: Container(
+          padding: EdgeInsets.fromLTRB(25, 30, 30, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 20.0,
+                    color: fontColor,
+                  ),
+                  Text(
+                    ' ' + weatherData.cityName,
+                    style: TextStyle(
+                      fontSize: 23.0,
+                      fontFamily: 'Montserrat',
+                      // fontWeight: FontWeight.w900,
+                      color: fontColor,
+                    ),
+                  ),
+                ],
+              ),
+              Spacer(),
+              Text(
+                weatherData.aqi.toString(),
+                style: TextStyle(
+                  fontSize: 100.0,
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold,
+                  color: fontColor,
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                weatherData.getAQIClassification(),
+                style: TextStyle(
+                  fontSize: 50.0,
+                  fontFamily: 'Montserrat',
+                  // fontWeight: FontWeight.w900,
+                  color: fontColor,
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 16.0),
+                height: 10.0,
+                width: double.infinity,
+                color: fontColor.withOpacity(0.20),
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height - 400,
+                child: Text(
+                  weatherData.getAQIActions(),
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      color: fontColor,
+                      fontFamily: 'Montserrat',
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 16.0),
+                height: 10.0,
+                width: double.infinity,
+                color: fontColor.withOpacity(0.20),
+              ),
+              Text(
+                'Last Updated: $ordinalIndicator $formattedTime',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 14.0,
+                    color: fontColor,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: AppColors.backgroundColor(weatherData.aqi),
+      );
+    }
+  }
+
+  String _getOrdinalIndicator(int day) {
+    if (day >= 11 && day <= 13) {
+      return '${day}th';
+    }
+    switch (day % 10) {
+      case 1:
+        return '${day}st';
+      case 2:
+        return '${day}nd';
+      case 3:
+        return '${day}rd';
+      default:
+        return '${day}th';
+    }
   }
 }

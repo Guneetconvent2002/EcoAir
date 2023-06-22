@@ -1,42 +1,37 @@
-import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
-class DeviceLocation {
-  final double latitude;
-  final double longitude;
-  final String city;
-  final String state;
+class LocationService {
+  Future<Position?> getCurrentLocation() async {
+    Position? position;
 
-  DeviceLocation({
-    required this.latitude,
-    required this.longitude,
-    required this.city,
-    required this.state,
-  });
+    try {
+      position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+      );
+    } catch (e) {
+      print('Error while getting location: $e');
+    }
 
-  static Future<DeviceLocation> getCurrentLocation() async {
-    // Get the device's current location.
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    // Get the city and state from the device's location.
-    String city = await Geocoder.local.getAddressFromLocation(
-      position.latitude,
-      position.longitude,
-    );
-    String state = city.split(',')[1];
-
-    // Return a new DeviceLocation object.
-    return DeviceLocation(
-      latitude: position.latitude,
-      longitude: position.longitude,
-      city: city,
-      state: state,
-    );
+    return position;
   }
 
-  String get cityName => city;
+  Future<String> getCityName(Position position) async {
+    String cityName = '';
 
-  String get stateName => state;
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        cityName = placemarks[0].locality ?? '';
+      }
+    } catch (e) {
+      print('Error while getting city name: $e');
+    }
+
+    return cityName;
+  }
 }
