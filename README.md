@@ -23,8 +23,8 @@ EcoAir is a powerful tool that allows users to stay informed about the air quali
 ## Screenshots 📷
 
 <!-- Add your screenshots here -->
-![Screenshot 1](ScreenShots/Hazardous.png) {: width = '300px" height = "900px"} 
-![Screenshot 2](ScreenShots/Unhealthy.png) {: width = '300px" height = "900px"} 
+![Screenshot 1]<img src="hScreenShots/Hazardous.png"  width="60%" height="30%">
+![Screenshot 2]<img src="ScreenShots/Unhealthy.png"  width="60%" height="30%">
 ![Screenshot 3](ScreenShots/Combined.png)
 
 <br>
